@@ -30,14 +30,18 @@ class DictionaryModel:
         except sqlite3.OperationalError:
             pass  # table already exists
 
+    def get_random_word(self):
+        result = self._c.execute('SELECT word, translations FROM words WHERE dictionary=? ORDER BY RANDOM()', (DICTIONARY, ))
+        return result.fetchone()
+
     def get_translations(self, word):
-        result = self._c.execute('SELECT translations FROM words WHERE dictionary=? AND word=?', (DICTIONARY, word,))
+        result = self._c.execute('SELECT translations FROM words WHERE dictionary=? AND word=?', (DICTIONARY, word, ))
         for row in result:
             return row[0].split(', ')
 
     def save_translations(self, word, translations):
         translations = ', '.join(translations)
-        self._c.execute('INSERT INTO words VALUES (?, ?, ?)', (DICTIONARY, word, translations))
+        self._c.execute('INSERT INTO words VALUES (?, ?, ?)', (DICTIONARY, word, translations, ))
         self._connection.commit()
 
 
@@ -73,11 +77,15 @@ class RequestsWrapper:
 if __name__ == '__main__':
     requests_wrapper = RequestsWrapper()
     sql_client = DictionaryModel()
+
     if len(sys.argv) > 1:
         for word in sys.argv[1:]:
             translations = sql_client.get_translations(word)
             if not translations:
                 translations = requests_wrapper.get_translations(word)
                 sql_client.save_translations(word, translations)
-
             print(', '.join(translations))
+
+    else:
+        random_word = sql_client.get_random_word()
+        print('%s:  %s' % random_word)
