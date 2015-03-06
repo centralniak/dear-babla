@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os.path
 import sqlite3
 import sys
 
@@ -7,9 +8,9 @@ import bs4
 import requests
 
 
-DICTIONARY = 'english-polish'
-
 BABLA_HTTP_ENDPOINT = 'http://en.bab.la/%(dictionary)s/%(word)s'
+
+DICTIONARY = 'english-polish'
 
 
 class DictionaryModel:
@@ -19,7 +20,7 @@ class DictionaryModel:
 
     def __init__(self, database=None):
         if database is None:
-            database = 'dearbabla.db'
+            database = os.path.join(os.path.dirname(__file__), 'dearbabla.db')
         self._connection = sqlite3.connect(database)
         self._c = self._connection.cursor()
         self._ensure_tables()
@@ -29,6 +30,11 @@ class DictionaryModel:
             self._c.execute('CREATE TABLE words (dictionary TEXT, word TEXT, translations TEXT)')
         except sqlite3.OperationalError:
             pass  # table already exists
+
+    def delete_translations(self, word):
+        result = self._c.execute('DELETE FROM words WHERE dictionary=? AND word=?', (DICTIONARY, word, ))
+        self._connection.commit()
+        return result
 
     def get_random_word(self):
         result = self._c.execute('SELECT word, translations FROM words WHERE dictionary=? ORDER BY RANDOM()', (DICTIONARY, ))
@@ -74,18 +80,26 @@ class RequestsWrapper:
         return all_results
 
 
-if __name__ == '__main__':
+def main():
     requests_wrapper = RequestsWrapper()
     sql_client = DictionaryModel()
 
     if len(sys.argv) > 1:
-        for word in sys.argv[1:]:
-            translations = sql_client.get_translations(word)
-            if not translations:
-                translations = requests_wrapper.get_translations(word)
-                sql_client.save_translations(word, translations)
-            print(', '.join(translations))
+        if sys.argv[1] == '--delete':
+            for word in sys.argv[2:]:
+                sql_client.delete_translations(word)
+        else:
+            for word in sys.argv[1:]:
+                translations = sql_client.get_translations(word)
+                if not translations:
+                    translations = requests_wrapper.get_translations(word)
+                    sql_client.save_translations(word, translations)
+                print(', '.join(translations))
 
     else:
         random_word = sql_client.get_random_word()
         print('%s:  %s' % random_word)
+
+
+if __name__ == '__main__':
+    main()

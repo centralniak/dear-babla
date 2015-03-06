@@ -19,3 +19,9 @@ To be asked about a previously learnt word:
 ::
 
     python dearbabla.py
+
+Sometimes dearbabla will pickup a disappointing translation. Remove it with
+
+::
+
+    python dearbabla.py --delete bogus
