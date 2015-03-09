@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
+import argparse
 import os.path
 import sqlite3
 import sys
+import time
 
 import bs4
 import requests
@@ -12,19 +14,42 @@ BABLA_HTTP_ENDPOINT = 'http://en.bab.la/%(dictionary)s/%(word)s'
 
 DICTIONARY = 'english-polish'
 
+SLEEP_SECONDS = 2
+
 
 class Cli:
+
+    delay = False
+    delete = False
+    words = []
+
+    def __init__(self):
+        self._parse_args()
+
+    def _parse_args(self):
+        parser = argparse.ArgumentParser(
+            description='Helps you learn and memorize English by providing translations and excersises.'
+        )
+        parser.add_argument('words', metavar='N', type=int, nargs='*', help='list of words to operate on')
+        parser.add_argument('--delay', dest='delay', action='store_true',
+                            help='waits %d seconds before displaying the translation' % SLEEP_SECONDS)
+        parser.add_argument('--delete', dest='delete', action='store_true',
+                            help='deletes disappointing translation(s) passed as positional args')
+        args = parser.parse_args()
+        self.delay = args.delay
+        self.delete = args.delete
+        self.words = args.words
 
     def main(self):
         requests_wrapper = RequestsWrapper()
         sql_client = DictionaryModel()
 
-        if len(sys.argv) > 1:
-            if sys.argv[1] == '--delete':
-                for word in sys.argv[2:]:
+        if self.words:
+            if self.delete:
+                for word in self.words:
                     sql_client.delete_translations(word)
             else:
-                for word in sys.argv[1:]:
+                for word in self.words:
                     translations = sql_client.get_translations(word)
                     if not translations:
                         translations = requests_wrapper.get_translations(word)
@@ -33,7 +58,12 @@ class Cli:
 
         else:
             random_word = sql_client.get_random_word()
-            print('%s:  %s' % random_word)
+            sys.stdout.write('%s: ' % random_word[0])
+            sys.stdout.flush()
+            if self.delay:
+                time.sleep(SLEEP_SECONDS)
+            sys.stdout.write(random_word[1])
+            sys.stdout.write('\n')
 
 
 class DictionaryModel:

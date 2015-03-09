@@ -29,7 +29,7 @@ setup(
     author_email='centralny@centralny.info',
     license='MIT License',
 
-    version='0.0.2',
+    version='0.0.3',
     install_requires=REQUIREMENTS,
     platforms=['Windows', 'POSIX'],
 
