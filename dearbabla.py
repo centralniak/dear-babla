@@ -13,6 +13,29 @@ BABLA_HTTP_ENDPOINT = 'http://en.bab.la/%(dictionary)s/%(word)s'
 DICTIONARY = 'english-polish'
 
 
+class Cli:
+
+    def main(self):
+        requests_wrapper = RequestsWrapper()
+        sql_client = DictionaryModel()
+
+        if len(sys.argv) > 1:
+            if sys.argv[1] == '--delete':
+                for word in sys.argv[2:]:
+                    sql_client.delete_translations(word)
+            else:
+                for word in sys.argv[1:]:
+                    translations = sql_client.get_translations(word)
+                    if not translations:
+                        translations = requests_wrapper.get_translations(word)
+                        sql_client.save_translations(word, translations)
+                    print(', '.join(translations))
+
+        else:
+            random_word = sql_client.get_random_word()
+            print('%s:  %s' % random_word)
+
+
 class DictionaryModel:
 
     _connection = None
@@ -81,24 +104,8 @@ class RequestsWrapper:
 
 
 def main():
-    requests_wrapper = RequestsWrapper()
-    sql_client = DictionaryModel()
-
-    if len(sys.argv) > 1:
-        if sys.argv[1] == '--delete':
-            for word in sys.argv[2:]:
-                sql_client.delete_translations(word)
-        else:
-            for word in sys.argv[1:]:
-                translations = sql_client.get_translations(word)
-                if not translations:
-                    translations = requests_wrapper.get_translations(word)
-                    sql_client.save_translations(word, translations)
-                print(', '.join(translations))
-
-    else:
-        random_word = sql_client.get_random_word()
-        print('%s:  %s' % random_word)
+    cli = Cli()
+    cli.main()
 
 
 if __name__ == '__main__':
