@@ -30,7 +30,7 @@ class Cli:
         parser = argparse.ArgumentParser(
             description='Helps you learn and memorize English by providing translations and excersises.'
         )
-        parser.add_argument('words', metavar='N', type=int, nargs='*', help='list of words to operate on')
+        parser.add_argument('words', metavar='N', type=str, nargs='*', help='list of words to operate on')
         parser.add_argument('--delay', dest='delay', action='store_true',
                             help='waits %d seconds before displaying the translation' % SLEEP_SECONDS)
         parser.add_argument('--delete', dest='delete', action='store_true',
