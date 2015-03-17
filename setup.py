@@ -21,7 +21,7 @@ REQUIREMENTS = open(os.path.join(os.path.dirname(__file__), 'requirements.txt'))
 
 
 setup(
-    name='Dear Babla!',
+    name='dearbabla',
     description='Helps you learn and memorize English by providing translations and excersises.',
     classifiers=CLASSIFIERS,
     url='https://github.com/centralniak/dear-babla',
