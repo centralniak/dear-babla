@@ -21,6 +21,7 @@ class Cli:
 
     delay = False
     delete = False
+    show_count = False
     words = []
 
     def __init__(self):
@@ -31,6 +32,8 @@ class Cli:
             description='Helps you learn and memorize English by providing translations and excersises.'
         )
         parser.add_argument('words', metavar='N', type=str, nargs='*', help='list of words to operate on')
+        parser.add_argument('--count', dest='show_count', action='store_true',
+                            help='show how many words were already collected')
         parser.add_argument('--delay', dest='delay', action='store_true',
                             help='waits %d seconds before displaying the translation' % SLEEP_SECONDS)
         parser.add_argument('--delete', dest='delete', action='store_true',
@@ -38,6 +41,7 @@ class Cli:
         args = parser.parse_args()
         self.delay = args.delay
         self.delete = args.delete
+        self.show_count = args.show_count
         self.words = args.words
 
     def main(self):
@@ -55,6 +59,11 @@ class Cli:
                         translations = requests_wrapper.get_translations(word)
                         sql_client.save_translations(word, translations)
                     print(', '.join(translations))
+
+        elif self.show_count:
+            database_count = sql_client.get_count()
+            sys.stdout.write('Collected %d words' % database_count)
+            sys.stdout.write('\n')
 
         else:
             random_word = sql_client.get_random_word()
@@ -88,6 +97,10 @@ class DictionaryModel:
         result = self._c.execute('DELETE FROM words WHERE dictionary=? AND word=?', (DICTIONARY, word, ))
         self._connection.commit()
         return result
+
+    def get_count(self):
+        result = self._c.execute('SELECT COUNT(*) FROM words')
+        return result.fetchone()[0]
 
     def get_random_word(self):
         result = self._c.execute('SELECT word, translations FROM words WHERE dictionary=? ORDER BY RANDOM()', (DICTIONARY, ))
