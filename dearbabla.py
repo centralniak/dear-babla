@@ -57,7 +57,8 @@ class Cli:
                     translations = sql_client.get_translations(word)
                     if not translations:
                         translations = requests_wrapper.get_translations(word)
-                        sql_client.save_translations(word, translations)
+                        if translations:
+                            sql_client.save_translations(word, translations)
                     print(', '.join(translations))
 
         elif self.show_count:
