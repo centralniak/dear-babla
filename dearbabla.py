@@ -142,7 +142,7 @@ class RequestsWrapper:
     def get_translations(self, word):
         url = BABLA_HTTP_ENDPOINT % {'dictionary': DICTIONARY, 'word': word}
         response = self._babla_get(url)
-        html_soup = bs4.BeautifulSoup(response.text)
+        html_soup = bs4.BeautifulSoup(response.text, 'html.parser')
         all_results = [r.text for r in html_soup.select('.result-block .result-right .result-link')]
         return all_results
 
