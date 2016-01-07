@@ -22,6 +22,7 @@ class Cli:
     delay = False
     delete = False
     show_count = False
+    store = True
     words = []
 
     def __init__(self):
@@ -38,10 +39,13 @@ class Cli:
                             help='waits %d seconds before displaying the translation' % SLEEP_SECONDS)
         parser.add_argument('--delete', dest='delete', action='store_true',
                             help='deletes disappointing translation(s) passed as positional args')
+        parser.add_argument('--nostore', dest='store', action='store_false',
+                            help='do not store this translation, just query Babla')
         args = parser.parse_args()
         self.delay = args.delay
         self.delete = args.delete
         self.show_count = args.show_count
+        self.store = args.store
         self.words = args.words
 
     def main(self):
@@ -57,7 +61,7 @@ class Cli:
                     translations = sql_client.get_translations(word)
                     if not translations:
                         translations = requests_wrapper.get_translations(word)
-                        if translations:
+                        if translations and self.store:
                             sql_client.save_translations(word, translations)
                     print(', '.join(translations))
 
