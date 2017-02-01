@@ -147,7 +147,8 @@ class RequestsWrapper:
         url = BABLA_HTTP_ENDPOINT % {'dictionary': DICTIONARY, 'word': word}
         response = self._babla_get(url)
         html_soup = bs4.BeautifulSoup(response.text, 'html.parser')
-        all_results = [r.text for r in html_soup.select('.result-block .result-right .result-link')]
+        all_results = set([r.text for r in
+            html_soup.select('.content')[0].select('.quick-results .quick-result-entry .sense-group-results a')])
         return all_results
 
 
