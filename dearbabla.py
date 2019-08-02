@@ -24,9 +24,17 @@ class Cli:
     show_count = False
     store = True
     words = []
+    database_location = None
 
     def __init__(self):
         self._parse_args()
+        self.database_location = self._ensure_db_present()
+
+    def _ensure_db_present(self):
+        database_location = os.environ.get('DEARBABLA_DB')
+        if not database_location or not os.path.exists(database_location):
+            raise ValueError('Database not found. DEARBABLA_DB={}'.format(database_location))
+        return database_location
 
     def _parse_args(self):
         parser = argparse.ArgumentParser(
@@ -50,7 +58,7 @@ class Cli:
 
     def main(self):
         requests_wrapper = RequestsWrapper()
-        sql_client = DictionaryModel()
+        sql_client = DictionaryModel(self.database_location)
 
         if self.words:
             if self.delete:
@@ -85,9 +93,7 @@ class DictionaryModel:
     _connection = None
     _c = None
 
-    def __init__(self, database=None):
-        if database is None:
-            database = os.path.join(os.path.dirname(__file__), 'dearbabla.db')
+    def __init__(self, database):
         self._connection = sqlite3.connect(database)
         self._c = self._connection.cursor()
         self._ensure_tables()
@@ -138,7 +144,7 @@ class RequestsWrapper:
         }
         new_kwargs = {
             'headers': headers,
-            'timeout': 2
+            'timeout': 8
         }
         new_kwargs.update(kwargs)
         return requests.get(*args, **new_kwargs)
